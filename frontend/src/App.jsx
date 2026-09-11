@@ -470,6 +470,17 @@ function App() {
                   </div>
                 </div>
 
+                {reportData.citizen_legal_rights && reportData.citizen_legal_rights.length > 0 && (
+                  <div className="card bg-blue-50 dark:bg-blue-900/20 border-blue-100 dark:border-blue-800">
+                    <h3 className="text-lg font-bold text-civic-primary dark:text-blue-400 mb-3">Your Legal Rights</h3>
+                    <ul className="list-disc list-inside space-y-2 text-sm text-gray-800 dark:text-gray-300">
+                      {reportData.citizen_legal_rights.map((right, idx) => (
+                        <li key={idx}>{right}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div className="card flex flex-col h-full">
                     <div className="flex justify-between items-center mb-4">
