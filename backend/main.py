@@ -68,11 +68,18 @@ async def report_hazard(
     
     file_ext = image.filename.split(".")[-1] if image.filename and "." in image.filename else "jpg"
     unique_filename = f"{uuid.uuid4()}.{file_ext}"
-    upload_path = os.path.join(os.path.dirname(__file__), "uploads", unique_filename)
-    with open(upload_path, "wb") as f:
-        f.write(image_bytes)
-        
-    image_url = f"{request.base_url}uploads/{unique_filename}"
+    
+    # Handle serverless read-only filesystem (Vercel)
+    if os.environ.get("VERCEL") == "1":
+        # We cannot persistently store and serve files on Vercel without S3/Cloudinary
+        image_url = "[Image attached locally. Hosted version unavailable in Vercel Serverless environment]"
+    else:
+        upload_dir = os.path.join(os.path.dirname(__file__), "uploads")
+        os.makedirs(upload_dir, exist_ok=True)
+        upload_path = os.path.join(upload_dir, unique_filename)
+        with open(upload_path, "wb") as f:
+            f.write(image_bytes)
+        image_url = f"{request.base_url}uploads/{unique_filename}"
     
     address = reverse_geocode(latitude, longitude)
     
