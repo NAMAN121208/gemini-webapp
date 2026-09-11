@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { UploadCloud, ShieldAlert, Mail, Copy, CheckCircle, WifiOff, Moon, Sun, Camera, Mic, MicOff, User, X, Menu, Home, Clock, MapPin } from 'lucide-react';
+import { UploadCloud, ShieldAlert, Mail, Copy, CheckCircle, WifiOff, Moon, Sun, Camera, Mic, MicOff, User, X, Menu, Home, Clock, MapPin, Globe } from 'lucide-react';
 import { openDB } from 'idb';
 import Logo from './components/Logo';
 
@@ -39,6 +39,17 @@ function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentView, setCurrentView] = useState('home'); // 'home', 'history', 'nearby'
   const [historyList, setHistoryList] = useState([]);
+
+  // Multilingual State
+  const languages = [
+    { name: 'English', code: 'en-IN' },
+    { name: 'Hindi', code: 'hi-IN' },
+    { name: 'Kannada', code: 'kn-IN' },
+    { name: 'Tamil', code: 'ta-IN' },
+    { name: 'Telugu', code: 'te-IN' },
+    { name: 'Marathi', code: 'mr-IN' }
+  ];
+  const [selectedLanguage, setSelectedLanguage] = useState(languages[0]);
 
   // Profile Settings State
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -111,6 +122,7 @@ function App() {
         formData.append('image', item.file);
         formData.append('latitude', item.lat);
         formData.append('longitude', item.lng);
+        formData.append('language', item.language || 'English');
         if (item.description) formData.append('description', item.description);
         if (item.userProfile) {
           if (item.userProfile.name) formData.append('user_name', item.userProfile.name);
@@ -162,6 +174,7 @@ function App() {
     }
 
     const recognition = new SpeechRecognition();
+    recognition.lang = selectedLanguage.code;
     recognition.continuous = false;
     recognition.interimResults = false;
 
@@ -198,6 +211,7 @@ function App() {
           file: file,
           description: description,
           userProfile: userProfile,
+          language: selectedLanguage.name,
           lat: location.lat,
           lng: location.lng,
           timestamp: new Date().toISOString()
@@ -216,6 +230,7 @@ function App() {
     formData.append('image', file);
     formData.append('latitude', location.lat);
     formData.append('longitude', location.lng);
+    formData.append('language', selectedLanguage.name);
     if (description) formData.append('description', description);
     
     if (userProfile.name) formData.append('user_name', userProfile.name);
@@ -326,6 +341,19 @@ function App() {
         </button>
 
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full px-3 py-1 shadow-sm">
+            <Globe size={16} className="text-gray-500" />
+            <select 
+              value={selectedLanguage.code}
+              onChange={(e) => setSelectedLanguage(languages.find(l => l.code === e.target.value))}
+              className="bg-transparent text-sm font-medium text-gray-800 dark:text-gray-200 outline-none cursor-pointer p-1"
+            >
+              {languages.map(lang => (
+                <option key={lang.code} value={lang.code} className="text-gray-900 dark:text-gray-900">{lang.name}</option>
+              ))}
+            </select>
+          </div>
+
           <button
             onClick={() => setShowProfileModal(true)}
             className="flex items-center gap-2 p-2 px-4 rounded-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors shadow-sm font-medium text-sm"

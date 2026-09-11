@@ -49,6 +49,7 @@ async def report_hazard(
     latitude: float = Form(...),
     longitude: float = Form(...),
     description: str = Form(None),
+    language: str = Form("English"),
     user_name: str = Form(None),
     user_email: str = Form(None),
     user_phone: str = Form(None),
@@ -77,8 +78,11 @@ async def report_hazard(
         prompt += "\nThe following details of the complainant MUST be included as the signature/sender in the drafted formal_petition:\n"
         prompt += "\n".join(user_info) + "\n"
         
-    prompt += """
+    prompt += f"""
     Identify the safety risks, determine the responsible_authority, cite relevant citizen_legal_rights (e.g., Article 21 of the Indian Constitution, local municipal acts), draft a formal_petition, and formulate targeted rti_questions regarding its maintenance.
+    
+    CRITICAL INSTRUCTION FOR LANGUAGE:
+    The `formal_petition` and `rti_questions` MUST be written fluently in {language}. The rest of the JSON fields (like hazard_summary, responsible_authority) can remain in English, but the actual drafted documents MUST be in {language}.
     
     CRITICAL INSTRUCTION FOR DANGER SCORE:
     When assigning the `danger_score` (1-10), you MUST use the full range of the scale based on objective visual severity. Do NOT default to 8.
