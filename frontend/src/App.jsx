@@ -249,15 +249,19 @@ function App() {
       }
       const data = await res.json();
       setReportData(data);
+      setLoading(false);
       
-      // Save to history
-      const db = await initDB();
-      await db.add('reportHistory', { ...data, timestamp: new Date().toISOString() });
-      loadHistory();
+      // Save to history (non-blocking)
+      try {
+        const db = await initDB();
+        await db.add('reportHistory', { ...data, timestamp: new Date().toISOString() });
+        loadHistory();
+      } catch (dbErr) {
+        console.error("Failed to save report to history", dbErr);
+      }
       
     } catch (err) {
       setError(err.message || 'An error occurred during analysis.');
-    } finally {
       setLoading(false);
     }
   };
