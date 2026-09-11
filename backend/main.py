@@ -89,26 +89,44 @@ async def report_hazard(
     - 9 to 10: Critical life-threatening emergency (e.g., massive sinkhole, collapsed infrastructure, live sparking high-voltage transformer, completely missing manhole cover on a dark street).
     """
     
-    try:
-        # Use gemini-3.5-flash (since 1.5 is deprecated)
-        response = client.models.generate_content(
-            model='gemini-3.5-flash',
-            contents=[
-                types.Part.from_bytes(data=image_bytes, mime_type=image.content_type),
-                prompt
-            ],
-            config=types.GenerateContentConfig(
-                response_mime_type="application/json",
-                response_schema=HazardResponse,
-                temperature=0.2,
-            ),
-        )
-        result = HazardResponse.model_validate_json(response.text)
-        return result
-    except ValidationError as e:
-        raise HTTPException(status_code=500, detail=f"Data validation error from AI response: {e}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to process with Gemini API: {str(e)}")
+    import asyncio
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            # First try the primary flash model
+            model_name = 'gemini-3.5-flash' if attempt < 2 else 'gemini-1.5-pro'
+            
+            response = client.models.generate_content(
+                model=model_name,
+                contents=[
+                    types.Part.from_bytes(data=image_bytes, mime_type=image.content_type),
+                    prompt
+                ],
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=HazardResponse,
+                    temperature=0.2,
+                ),
+            )
+            result = HazardResponse.model_validate_json(response.text)
+            return result
+        except ValidationError as e:
+            raise HTTPException(status_code=500, detail=f"Data validation error from AI response: {e}")
+        except Exception as e:
+            error_str = str(e)
+            if "503" in error_str or "UNAVAILABLE" in error_str:
+                if attempt < max_retries - 1:
+                    print(f"Gemini 503 error on attempt {attempt+1}, retrying...")
+                    await asyncio.sleep(2 ** attempt)  # 1s, 2s
+                    continue
+                else:
+                    raise HTTPException(status_code=503, detail="The AI model is currently experiencing high demand. Please try again in a few minutes.")
+            
+            # If it's a 404 (model not found), try falling back immediately on next loop
+            if "404" in error_str and attempt < max_retries - 1:
+                continue
+                
+            raise HTTPException(status_code=500, detail=f"Failed to process with Gemini API: {error_str}")
 
 @app.get("/api/health")
 def health_check():
