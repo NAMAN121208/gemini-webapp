@@ -294,7 +294,11 @@ function App() {
       )}
 
       {/* Hamburger Sidebar */}
-      <div className={`fixed inset-y-0 left-0 w-72 bg-white dark:bg-gray-900 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <div 
+        id="main-sidebar"
+        role="navigation"
+        aria-label="Main navigation"
+        className={`fixed inset-y-0 left-0 w-72 bg-white dark:bg-gray-900 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-civic-surface dark:bg-gray-800">
           <div className="flex items-center gap-2">
             <Logo showText={false} className="h-8 w-8" />
@@ -339,7 +343,9 @@ function App() {
         <button
           onClick={() => setIsSidebarOpen(true)}
           className="p-2 -ml-2 rounded-lg text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
-          aria-label="Open Menu"
+          aria-label="Open navigation menu"
+          aria-expanded={isSidebarOpen}
+          aria-controls="main-sidebar"
         >
           <Menu size={28} />
         </button>
@@ -396,18 +402,26 @@ function App() {
                   <div 
                     className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-civic-primary dark:hover:border-blue-400 hover:bg-civic-surface dark:hover:bg-gray-800 transition-colors cursor-pointer bg-white dark:bg-gray-900 flex flex-col justify-center"
                     onClick={() => fileInputRef.current?.click()}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Upload a photo of the hazard"
+                    onKeyDown={(e) => e.key === 'Enter' && fileInputRef.current?.click()}
                   >
-                    <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="sr-only" />
-                    <UploadCloud size={48} className="mx-auto text-civic-text-muted dark:text-gray-500 mb-3" />
+                    <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="sr-only" aria-label="Select image file" />
+                    <UploadCloud size={48} className="mx-auto text-civic-text-muted dark:text-gray-500 mb-3" aria-hidden="true" />
                     <p className="text-sm font-semibold text-civic-primary dark:text-blue-300">Upload Photo</p>
                   </div>
 
                   <div 
                     className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-8 text-center hover:border-civic-primary dark:hover:border-blue-400 hover:bg-civic-surface dark:hover:bg-gray-800 transition-colors cursor-pointer bg-white dark:bg-gray-900 flex flex-col justify-center"
                     onClick={() => cameraInputRef.current?.click()}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Take a live photo of the hazard"
+                    onKeyDown={(e) => e.key === 'Enter' && cameraInputRef.current?.click()}
                   >
-                    <input type="file" ref={cameraInputRef} onChange={handleFileChange} accept="image/*" capture="environment" className="sr-only" />
-                    <Camera size={48} className="mx-auto text-civic-text-muted dark:text-gray-500 mb-3" />
+                    <input type="file" ref={cameraInputRef} onChange={handleFileChange} accept="image/*" capture="environment" className="sr-only" aria-label="Capture image from camera" />
+                    <Camera size={48} className="mx-auto text-civic-text-muted dark:text-gray-500 mb-3" aria-hidden="true" />
                     <p className="text-sm font-semibold text-civic-primary dark:text-blue-300">Take Live Photo</p>
                   </div>
                 </div>

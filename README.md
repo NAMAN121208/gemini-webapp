@@ -1,36 +1,113 @@
-# Gemini Web Application
+# CivicShield — Civic Hazard Reporting & Legal Petition Generator
 
-This is a starter web application powered by the Gemini API, designed to be deployed on Google Cloud Run.
+<p align="center">
+  <img src="frontend/public/favicon.svg" width="80" alt="CivicShield Logo" />
+</p>
 
-## Project Description
+<p align="center">
+  <strong>THE BRIDGE TO MUNICIPAL ACTION</strong>
+</p>
 
-[Add a brief description of your project here. What does this application do? What specific Gemini features does it use (e.g., text generation, vision, multi-modal)?]
+<p align="center">
+  <a href="https://gemini-webapp-civicshield.vercel.app">🌐 Live Demo</a> •
+  <a href="#features">Features</a> •
+  <a href="#tech-stack">Tech Stack</a> •
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#security">Security</a>
+</p>
 
-## Folder Structure
+---
 
-- `app.py`: The main web application code (Flask).
-- `requirements.txt`: Python dependencies.
-- `Dockerfile`: Instructions to build the Docker container for Cloud Run.
-- `templates/`: HTML templates for the web application.
-- `static/`: Static assets (CSS, JS, images).
+## Overview
 
-## Local Development
+**CivicShield** is an AI-powered Progressive Web App (PWA) that empowers Indian citizens to report civic hazards (potholes, broken streetlamps, open manholes, etc.) and automatically generates legally-grounded formal petitions and RTI queries addressed to the correct municipal authority.
 
-1. Ensure you have Python installed.
-2. Set your Google Gemini API key as an environment variable:
-   - Windows: `set GEMINI_API_KEY=your_api_key`
-   - Linux/Mac: `export GEMINI_API_KEY=your_api_key`
-3. Install dependencies: `pip install -r requirements.txt`
-4. Run the application: `python app.py`
+## Features
 
-## Deployment to Google Cloud Run
+- 📸 **Upload or live-capture** a photo of a civic hazard
+- 🤖 **AI Analysis** using Google Gemini — detects hazard type, severity score (1-10), and responsible authority
+- 📄 **Auto-generates formal petitions** citing Indian constitutional rights (Article 21, etc.)
+- 📬 **Gmail integration** — opens a pre-filled draft with the petition and evidence link
+- 📋 **RTI question generator** for filing Right to Information requests
+- 🎤 **Multilingual voice dictation** — supports English, Hindi, Kannada, Tamil, Telugu, Marathi
+- 🌐 **Language selector** — petitions generated in user's regional language
+- 👤 **Persistent user profile** — name, email, phone, address auto-filled in every petition
+- 📍 **GPS-based reverse geocoding** for accurate ward/pincode in the petition
+- 📱 **PWA with offline support** — reports queued locally and synced on reconnect
+- 🗂️ **History view** — browse all past reports stored in IndexedDB
+- 🗺️ **Nearby hazards** — see civic issues reported by others in the area
+- 🌙 **Dark mode** — full dark/light theme toggle
 
-This project is configured for easy deployment to Google Cloud Run.
+## Tech Stack
 
-1. Install the [Google Cloud SDK](https://cloud.google.com/sdk/docs/install).
-2. Authenticate: `gcloud auth login`
-3. Set your project: `gcloud config set project YOUR_PROJECT_ID`
-4. Build and deploy:
-   ```bash
-   gcloud run deploy gemini-webapp --source . --region us-central1 --allow-unauthenticated --set-env-vars="GEMINI_API_KEY=your_api_key"
-   ```
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, Vite, TailwindCSS, Lucide Icons |
+| Offline | Progressive Web App (Workbox), IndexedDB (idb) |
+| Backend | Python 3.11+, FastAPI, Uvicorn |
+| AI | Google Gemini API (`gemini-3.5-flash`) |
+| Geocoding | Google Maps Geocoding API |
+| Deployment | Vercel |
+| Testing | Pytest, FastAPI TestClient |
+
+## Security
+
+CivicShield implements multiple layers of security:
+
+- 🛡️ **Security Headers**: `X-Content-Type-Options`, `X-Frame-Options`, `X-XSS-Protection`, `Referrer-Policy`, `Permissions-Policy`
+- 🚦 **Rate Limiting**: Maximum 10 API requests per IP per minute
+- ✅ **Input Validation**: File type whitelist, 10 MB size limit, coordinate range checks, extension validation
+- 🧹 **Prompt Injection Prevention**: All user text inputs sanitized (control chars stripped, length capped)
+- 🔒 **Configurable CORS**: Restricted to allowed origins via environment variable
+
+## Getting Started
+
+### Prerequisites
+- Python 3.11+
+- Node.js 18+
+- A [Google Gemini API Key](https://makersuite.google.com/app/apikey)
+
+### Backend Setup
+```bash
+cd backend
+python -m venv venv
+# Windows: .\venv\Scripts\python.exe -m pip install -r requirements.txt
+# Mac/Linux: source venv/bin/activate && pip install -r requirements.txt
+pip install -r requirements.txt
+
+# Start the server
+GEMINI_API_KEY=your_key_here uvicorn main:app --host 127.0.0.1 --port 8000
+```
+
+### Frontend Setup
+```bash
+cd frontend
+npm install
+npm run build   # Production build served by FastAPI
+# OR
+npm run dev     # Standalone dev server on port 5173
+```
+
+### Running Tests
+```bash
+pip install pytest httpx
+pytest
+```
+
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `GEMINI_API_KEY` | ✅ Yes | Google Gemini API Key |
+| `GOOGLE_MAPS_API_KEY` | ⚠️ Optional | For accurate reverse geocoding |
+| `ALLOWED_ORIGINS` | ⚠️ Optional | Comma-separated CORS origins (default: `*`) |
+
+## Deployment (Vercel)
+
+1. Import `gemini-webapp-civicshield` from GitHub in [Vercel Dashboard](https://vercel.com/new)
+2. Add `GEMINI_API_KEY` in Environment Variables
+3. Deploy — Vercel auto-detects `vercel.json`
+
+## License
+
+MIT License — built with ❤️ for civic empowerment.

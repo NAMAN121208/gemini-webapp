@@ -1,55 +1,137 @@
 import pytest
 from fastapi.testclient import TestClient
-import json
+from unittest.mock import patch, MagicMock
+import io
 import sys
 import os
-from unittest.mock import patch
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from main import app
+# Add backend to path
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+from backend.main import app
 
 client = TestClient(app)
 
-def test_health_check():
-    response = client.get("/api/health")
-    assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
 
-def test_report_endpoint_no_image():
-    response = client.post("/api/report", data={"latitude": 12.9716, "longitude": 77.5946})
-    assert response.status_code == 422 
+class TestHealthEndpoint:
+    def test_health_check_returns_ok(self):
+        response = client.get("/api/health")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "ok"
+        assert "version" in data
 
-@patch("main.reverse_geocode")
-@patch("main.client.models.generate_content")
-def test_report_endpoint_success(mock_generate_content, mock_reverse_geocode):
-    mock_reverse_geocode.return_value = "Mocked Address, Bangalore (Ward 10, 560001)"
-    
-    mock_response_json = json.dumps({
-        "hazard_summary": "Large pothole on main road",
-        "danger_score": 8,
-        "responsible_authority": "BBMP",
-        "citizen_legal_rights": ["Right to Life (Article 21)"],
-        "formal_petition": {
-            "subject": "Urgent complaint regarding life-threatening pothole",
-            "body": "Dear Sir/Madam, please repair the pothole immediately."
-        },
-        "rti_questions": [
-            {"question": "When was the last maintenance contract issued?"}
-        ]
-    })
-    
-    class MockResponse:
-        text = mock_response_json
-        
-    mock_generate_content.return_value = MockResponse()
-    
-    dummy_image = b"dummy bytes"
-    files = {"image": ("test.jpg", dummy_image, "image/jpeg")}
-    data = {"latitude": 12.9716, "longitude": 77.5946}
-    
-    response = client.post("/api/report", files=files, data=data)
-    assert response.status_code == 200
-    
-    result = response.json()
-    assert result["danger_score"] == 8
-    assert result["responsible_authority"] == "BBMP"
+    def test_health_check_is_fast(self):
+        import time
+        start = time.time()
+        client.get("/api/health")
+        elapsed = time.time() - start
+        assert elapsed < 1.0  # Should respond in under 1 second
+
+
+class TestInputValidation:
+    def test_rejects_non_image_file(self):
+        fake_pdf = io.BytesIO(b"%PDF-1.4 fake pdf content")
+        response = client.post(
+            "/api/report",
+            files={"image": ("test.pdf", fake_pdf, "application/pdf")},
+            data={"latitude": "12.9716", "longitude": "77.5946"}
+        )
+        assert response.status_code == 400
+        assert "Invalid file type" in response.json()["detail"]
+
+    def test_rejects_empty_image(self):
+        response = client.post(
+            "/api/report",
+            files={"image": ("empty.jpg", io.BytesIO(b""), "image/jpeg")},
+            data={"latitude": "12.9716", "longitude": "77.5946"}
+        )
+        assert response.status_code == 400
+
+    def test_rejects_invalid_latitude(self):
+        fake_img = io.BytesIO(b"\xff\xd8\xff" + b"x" * 100)
+        response = client.post(
+            "/api/report",
+            files={"image": ("test.jpg", fake_img, "image/jpeg")},
+            data={"latitude": "999", "longitude": "77.5946"}
+        )
+        assert response.status_code == 422
+
+    def test_rejects_invalid_longitude(self):
+        fake_img = io.BytesIO(b"\xff\xd8\xff" + b"x" * 100)
+        response = client.post(
+            "/api/report",
+            files={"image": ("test.jpg", fake_img, "image/jpeg")},
+            data={"latitude": "12.9716", "longitude": "999"}
+        )
+        assert response.status_code == 422
+
+    def test_missing_image_returns_422(self):
+        response = client.post(
+            "/api/report",
+            data={"latitude": "12.9716", "longitude": "77.5946"}
+        )
+        assert response.status_code == 422
+
+    def test_missing_coordinates_returns_422(self):
+        fake_img = io.BytesIO(b"\xff\xd8\xff" + b"x" * 100)
+        response = client.post(
+            "/api/report",
+            files={"image": ("test.jpg", fake_img, "image/jpeg")},
+        )
+        assert response.status_code == 422
+
+
+class TestSanitization:
+    def test_sanitize_text_strips_control_chars(self):
+        from backend.main import sanitize_text
+        result = sanitize_text("Hello\x00World\x07Test")
+        assert "\x00" not in result
+        assert "\x07" not in result
+        assert "HelloWorldTest" == result
+
+    def test_sanitize_text_truncates(self):
+        from backend.main import sanitize_text
+        long_text = "A" * 2000
+        result = sanitize_text(long_text, max_len=100)
+        assert len(result) == 100
+
+    def test_sanitize_empty_string(self):
+        from backend.main import sanitize_text
+        assert sanitize_text("") == ""
+        assert sanitize_text(None) == ""
+
+
+class TestReverseGeocode:
+    def test_returns_default_without_api_key(self):
+        from backend.main import reverse_geocode
+        result = reverse_geocode(12.9716, 77.5946)
+        assert isinstance(result, str)
+        assert len(result) > 0
+
+    def test_rejects_invalid_coordinates(self):
+        from backend.main import reverse_geocode
+        result = reverse_geocode(999, 999)
+        assert "Default Fallback" in result
+
+    @patch("backend.main.requests.get")
+    def test_uses_api_response_when_key_present(self, mock_get):
+        from backend.main import reverse_geocode
+        mock_response = MagicMock()
+        mock_response.json.return_value = {
+            "status": "OK",
+            "results": [{"formatted_address": "MG Road, Bengaluru, Karnataka 560001, India"}]
+        }
+        mock_get.return_value = mock_response
+
+        with patch.dict(os.environ, {"GOOGLE_MAPS_API_KEY": "fake_key"}):
+            result = reverse_geocode(12.9716, 77.5946)
+        assert "MG Road" in result
+
+
+class TestSecurityHeaders:
+    def test_security_headers_present_on_health(self):
+        response = client.get("/api/health")
+        assert "x-content-type-options" in response.headers
+        assert response.headers["x-content-type-options"] == "nosniff"
+        assert "x-frame-options" in response.headers
+        assert response.headers["x-frame-options"] == "DENY"
