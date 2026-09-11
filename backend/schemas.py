@@ -14,3 +14,4 @@ class HazardResponse(BaseModel):
     citizen_legal_rights: list[str] = Field(description="Relevant constitutional provisions (e.g. Article 21) or statutory municipal duties.")
     formal_petition: FormalPetition
     rti_questions: list[RTIQuestion]
+    image_url: str = Field(default="", description="The URL of the uploaded image.")

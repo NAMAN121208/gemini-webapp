@@ -1,5 +1,6 @@
 import os
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+import uuid
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
 from google import genai
@@ -10,6 +11,10 @@ from schemas import HazardResponse
 
 # Set up app
 app = FastAPI(title="CivicShield API")
+
+os.makedirs(os.path.join(os.path.dirname(__file__), "uploads"), exist_ok=True)
+from fastapi.staticfiles import StaticFiles
+app.mount("/uploads", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "uploads")), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,
@@ -45,6 +50,7 @@ def reverse_geocode(lat: float, lng: float) -> str:
 
 @app.post("/api/report", response_model=HazardResponse)
 async def report_hazard(
+    request: Request,
     image: UploadFile = File(...),
     latitude: float = Form(...),
     longitude: float = Form(...),
@@ -59,6 +65,15 @@ async def report_hazard(
         raise HTTPException(status_code=400, detail="File provided is not an image.")
 
     image_bytes = await image.read()
+    
+    file_ext = image.filename.split(".")[-1] if image.filename and "." in image.filename else "jpg"
+    unique_filename = f"{uuid.uuid4()}.{file_ext}"
+    upload_path = os.path.join(os.path.dirname(__file__), "uploads", unique_filename)
+    with open(upload_path, "wb") as f:
+        f.write(image_bytes)
+        
+    image_url = f"{request.base_url}uploads/{unique_filename}"
+    
     address = reverse_geocode(latitude, longitude)
     
     prompt = f"""
@@ -113,6 +128,7 @@ async def report_hazard(
                 ),
             )
             result = HazardResponse.model_validate_json(response.text)
+            result.image_url = image_url
             return result
         except ValidationError as e:
             raise HTTPException(status_code=500, detail=f"Data validation error from AI response: {e}")

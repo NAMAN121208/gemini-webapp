@@ -441,7 +441,7 @@ function App() {
                 )}
 
                 <button type="submit" className="w-full btn-primary text-lg h-14 flex items-center justify-center disabled:opacity-70" disabled={loading}>
-                  {loading ? 'Analyzing Hazard...' : 'Submit Hazard Report'}
+                  {loading ? 'Analyzing Hazard...' : reportData ? 'Report Ready! Submit Another' : 'Submit Hazard Report'}
                 </button>
               </form>
             </section>
@@ -470,13 +470,16 @@ function App() {
                   <div className="card flex flex-col h-full">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="text-xl font-bold text-civic-primary dark:text-blue-400">Formal Petition</h3>
-                      <a href={`https://mail.google.com/mail/?view=cm&fs=1&to=contact@${reportData.responsible_authority.toLowerCase().replace(/[^a-z0-9]/g, '')}.gov.in&su=${encodeURIComponent(reportData.formal_petition.subject)}&body=${encodeURIComponent(reportData.formal_petition.body)}`} target="_blank" rel="noopener noreferrer" className="btn-primary flex items-center gap-2 text-sm bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700">
+                      <a href={`https://mail.google.com/mail/?view=cm&fs=1&to=contact@${reportData.responsible_authority.toLowerCase().replace(/[^a-z0-9]/g, '')}.gov.in&su=${encodeURIComponent(reportData.formal_petition.subject)}&body=${encodeURIComponent(reportData.formal_petition.body + '\n\nAttached Evidence: ' + reportData.image_url)}`} target="_blank" rel="noopener noreferrer" className="btn-primary flex items-center gap-2 text-sm bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700">
                         <Mail size={18} /> Send via Gmail
                       </a>
                     </div>
                     <div className="bg-civic-surface dark:bg-gray-900 p-5 rounded-lg flex-grow border border-gray-200 dark:border-gray-700">
                       <p className="font-bold mb-3 border-b border-gray-300 dark:border-gray-700 pb-2">Subject: <span className="font-normal">{reportData.formal_petition.subject}</span></p>
                       <p className="whitespace-pre-wrap text-sm">{reportData.formal_petition.body}</p>
+                      <p className="mt-4 pt-2 border-t border-gray-200 dark:border-gray-700 text-sm text-blue-600 dark:text-blue-400 break-all">
+                        📎 Attached Evidence: <a href={reportData.image_url} target="_blank" rel="noreferrer" className="underline">{reportData.image_url}</a>
+                      </p>
                     </div>
                   </div>
 
