@@ -6,11 +6,15 @@ import { openDB } from 'idb';
 const initDB = async () => {
   return openDB('CivicShieldDB', 2, {
     upgrade(db, oldVersion) {
-      if (!db.objectStoreNames.contains('offlineQueue')) {
+      // v1 → create offlineQueue
+      if (oldVersion < 1) {
         db.createObjectStore('offlineQueue', { keyPath: 'id', autoIncrement: true });
       }
-      if (!db.objectStoreNames.contains('reportHistory')) {
-        db.createObjectStore('reportHistory', { keyPath: 'id', autoIncrement: true });
+      // v1 → v2: add reportHistory store for returning users
+      if (oldVersion < 2) {
+        if (!db.objectStoreNames.contains('reportHistory')) {
+          db.createObjectStore('reportHistory', { keyPath: 'id', autoIncrement: true });
+        }
       }
     },
   });
@@ -99,9 +103,7 @@ function App() {
   const syncOfflineQueue = async () => {
     try {
       const db = await initDB();
-      const tx = db.transaction('offlineQueue', 'readwrite');
-      const store = tx.objectStore('offlineQueue');
-      const items = await store.getAll();
+      const items = await db.getAll('offlineQueue');
       
       for (const item of items) {
         const formData = new FormData();
@@ -110,18 +112,24 @@ function App() {
         formData.append('longitude', item.lng);
         if (item.description) formData.append('description', item.description);
         if (item.userProfile) {
-          formData.append('user_name', item.userProfile.name);
-          formData.append('user_email', item.userProfile.email);
-          formData.append('user_phone', item.userProfile.phone);
-          formData.append('user_address', item.userProfile.address);
+          if (item.userProfile.name) formData.append('user_name', item.userProfile.name);
+          if (item.userProfile.email) formData.append('user_email', item.userProfile.email);
+          if (item.userProfile.phone) formData.append('user_phone', item.userProfile.phone);
+          if (item.userProfile.address) formData.append('user_address', item.userProfile.address);
         }
 
-        const res = await fetch('/api/report', { method: 'POST', body: formData });
-        if (res.ok) {
-           const data = await res.json();
-           await db.add('reportHistory', { ...data, timestamp: new Date().toISOString() });
+        try {
+          const res = await fetch('/api/report', { method: 'POST', body: formData });
+          if (res.ok) {
+            const data = await res.json();
+            await db.add('reportHistory', { ...data, timestamp: new Date().toISOString() });
+          }
+        } catch (fetchErr) {
+          console.error('Failed to sync item, will retry later:', fetchErr);
+          continue;
         }
-        await store.delete(item.id);
+        // Delete only after successful fetch, using a fresh transaction
+        await db.delete('offlineQueue', item.id);
       }
       if (items.length > 0) {
         alert("Offline reports have been synced successfully!");

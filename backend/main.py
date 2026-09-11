@@ -54,7 +54,7 @@ async def report_hazard(
     user_phone: str = Form(None),
     user_address: str = Form(None)
 ):
-    if not image.content_type.startswith("image/"):
+    if not image.content_type or not image.content_type.startswith("image/"):
         raise HTTPException(status_code=400, detail="File provided is not an image.")
 
     image_bytes = await image.read()
