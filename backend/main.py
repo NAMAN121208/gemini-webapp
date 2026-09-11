@@ -79,6 +79,14 @@ async def report_hazard(
         
     prompt += """
     Identify the safety risks, determine the responsible_authority, cite relevant citizen_legal_rights (e.g., Article 21 of the Indian Constitution, local municipal acts), draft a formal_petition, and formulate targeted rti_questions regarding its maintenance.
+    
+    CRITICAL INSTRUCTION FOR DANGER SCORE:
+    When assigning the `danger_score` (1-10), you MUST use the full range of the scale based on objective visual severity. Do NOT default to 8.
+    Use this strict rubric:
+    - 1 to 3: Minor nuisance (e.g., mild litter, fading road paint, slight pavement crack).
+    - 4 to 6: Moderate issue requiring maintenance but not immediately life-threatening (e.g., small pothole, broken bench, overflowing bin).
+    - 7 to 8: Serious hazard posing significant risk of injury or vehicle damage (e.g., large deep pothole in traffic, leaning tree, minor exposed wiring).
+    - 9 to 10: Critical life-threatening emergency (e.g., massive sinkhole, collapsed infrastructure, live sparking high-voltage transformer, completely missing manhole cover on a dark street).
     """
     
     try:
