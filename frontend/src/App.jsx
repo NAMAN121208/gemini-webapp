@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { UploadCloud, ShieldAlert, Mail, Copy, CheckCircle, WifiOff, Moon, Sun, Camera, Mic, MicOff, User, X, Menu, Home, Clock, MapPin } from 'lucide-react';
 import { openDB } from 'idb';
+import Logo from './components/Logo';
 
 // Initialize IndexedDB for offline queue & history
 const initDB = async () => {
@@ -276,7 +277,10 @@ function App() {
       {/* Hamburger Sidebar */}
       <div className={`fixed inset-y-0 left-0 w-72 bg-white dark:bg-gray-900 shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center bg-civic-surface dark:bg-gray-800">
-          <h2 className="text-2xl font-bold text-civic-primary dark:text-blue-400">CivicShield</h2>
+          <div className="flex items-center gap-2">
+            <Logo showText={false} className="h-8 w-8" />
+            <h2 className="text-2xl font-bold text-civic-primary dark:text-blue-400">CivicShield</h2>
+          </div>
           <button onClick={() => setIsSidebarOpen(false)} className="text-gray-500 hover:text-gray-800 dark:hover:text-white">
             <X size={24} />
           </button>
@@ -343,8 +347,7 @@ function App() {
       {currentView === 'home' && (
         <div className="animate-fade-in">
           <header className="text-center mb-10">
-            <h1 className="text-4xl md:text-5xl font-bold text-civic-primary dark:text-blue-400 tracking-tight mb-3">CivicShield</h1>
-            <p className="text-lg text-civic-text-muted dark:text-civic-text-muted-dark max-w-xl mx-auto">Transforming infrastructure hazards into legally-grounded municipal petitions.</p>
+            <Logo className="w-full max-w-[500px] mx-auto mb-4" />
             
             {isOffline && (
               <div className="mt-4 inline-flex items-center gap-2 bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-4 py-2 rounded-full text-sm font-semibold border border-yellow-200 dark:border-yellow-800">

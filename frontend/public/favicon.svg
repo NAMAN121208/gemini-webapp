@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+  <g transform="translate(10, 15)">
+    <!-- Right half of the shield -->
+    <path d="M 90 15 L 150 15 L 150 75 C 150 115 120 145 90 155" 
+          fill="none" stroke="#1A365D" stroke-width="8" stroke-linecap="square" stroke-linejoin="miter"/>
+          
+    <!-- Left half of the shield -->
+    <path d="M 90 15 L 30 15 L 30 65" 
+          fill="none" stroke="#1A365D" stroke-width="8" stroke-linecap="square" />
+          
+    <!-- Left half architectural pillars -->
+    <path d="M 22 80 L 22 135" fill="none" stroke="#1A365D" stroke-width="6" />
+    <path d="M 38 80 L 38 135" fill="none" stroke="#1A365D" stroke-width="6" />
+    <path d="M 12 135 L 48 135" fill="none" stroke="#1A365D" stroke-width="6" stroke-linecap="square" />
+    <path d="M 12 80 L 48 80" fill="none" stroke="#1A365D" stroke-width="6" stroke-linecap="square" />
+
+    <!-- Crosshair / Map Pinpoint -->
+    <circle cx="90" cy="75" r="18" fill="none" stroke="#1A365D" stroke-width="4" />
+    <line x1="90" y1="42" x2="90" y2="62" stroke="#1A365D" stroke-width="4" stroke-linecap="round" />
+    <line x1="90" y1="88" x2="90" y2="108" stroke="#1A365D" stroke-width="4" stroke-linecap="round" />
+    <line x1="57" y1="75" x2="77" y2="75" stroke="#1A365D" stroke-width="4" stroke-linecap="round" />
+    <line x1="103" y1="75" x2="123" y2="75" stroke="#1A365D" stroke-width="4" stroke-linecap="round" />
+    
+    <!-- Urgent Crimson Accent Dot -->
+    <circle cx="90" cy="75" r="6" fill="#E53E3E" />
+  </g>
+</svg>
